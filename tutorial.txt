@@ -146,11 +146,11 @@ BƯỚC 5: TÀI KHOẢN TRẢI NGHIỆM HỆ THỐNG MẶC ĐỊNH
 Dữ liệu mẫu đã có sẵn 3 tài khoản tương ứng với 3 vai trò:
 
 1. Quản trị viên (Admin):
-   - Email: admin@example.com / Mật khẩu: 123456
+   - Email: admin@example.com / Mật khẩu: Admin@123456
 2. Nhân viên (Staff):
-   - Email: staff@example.com / Mật khẩu: 123456
+   - Email: staff@example.com / Mật khẩu: Staff@123456
 3. Khách hàng (Customer):
-   - Email: customer@example.com / Mật khẩu: 123456
+   - Email: customer@example.com / Mật khẩu: Customer@123456
 
 ------------------------------------------------------------------------
 BƯỚC 6: CHẠY KIỂM THỬ BACKEND (TEST SUITES)
