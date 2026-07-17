@@ -1,0 +1,164 @@
+========================================================================
+           HƯỚNG DẪN CẤU HÌNH VÀ CHẠY DỰ ÁN SQA03 - NHÓM 6
+========================================================================
+
+Dự án bao gồm 3 phần chính:
+1. Cơ sở dữ liệu: MySQL (đã cấu hình chạy Docker hoặc cài thủ công)
+2. Vector DB: ChromaDB (dành cho RAG Chatbot - chạy Docker)
+3. Backend: Node.js (Express)
+4. Frontend: ReactJS (Vite)
+
+Có 2 cách để khởi chạy Cơ sở dữ liệu và ChromaDB:
+- CÁCH 1: Sử dụng Docker Compose (Nhanh nhất & Khuyên dùng)
+- CÁCH 2: Cài đặt và cấu hình thủ công từng dịch vụ
+
+Dưới đây là chi tiết các bước thực hiện.
+
+========================================================================
+CÁCH 1: KHỞI CHẠY CƠ SỞ DỮ LIỆU & CHROMADB BẰNG DOCKER (KHUYÊN DÙNG)
+========================================================================
+Chỉ với 1 câu lệnh duy nhất, Docker sẽ tự động tải, xây dựng, cấu hình MySQL (tự động import database) và ChromaDB cho bạn.
+
+Yêu cầu: Đã cài đặt Docker Desktop và đang khởi động trên máy tính.
+
+Các bước thực hiện:
+1. Mở terminal tại thư mục gốc của dự án (thư mục chứa file docker-compose.yml).
+2. Chạy lệnh sau để khởi động MySQL và ChromaDB:
+   docker compose up -d
+
+   * Giải thích:
+     - Lệnh này sẽ build MySQL dựa trên Dockerfile tại `docker/mysql/Dockerfile` và tự động import file `ecommerce_db.sql` vào cơ sở dữ liệu.
+     - Đồng thời khởi chạy ChromaDB trên cổng 8000.
+     - Dữ liệu của MySQL và ChromaDB sẽ được lưu trữ lâu bền lần lượt trong các volume `mysql_data` và `chroma_data`.
+
+3. Kiểm tra các container đang chạy bằng lệnh:
+   docker ps
+   (Bạn sẽ thấy 2 container là `sqa_mysql_db` chạy cổng 3306 và `sqa_chroma_db` chạy cổng 8000).
+
+* Sau khi chạy thành công bằng Docker, bạn có thể nhảy thẳng tới "BƯỚC 2: CẤU HÌNH VÀ CHẠY BACKEND".
+
+========================================================================
+CÁCH 2: CÀI ĐẶT THỦ CÔNG TỪNG PHẦN (NẾU KHÔNG DÙNG DOCKER)
+========================================================================
+
+------------------------------------------------------------------------
+PHẦN A: CẤU HÌNH MYSQL THỦ CÔNG
+------------------------------------------------------------------------
+1. Khởi động MySQL Server trên máy của bạn (hoặc qua XAMPP, Laragon, MySQL Workbench,...).
+2. Tạo một database mới có tên là `ecommerce_db` bằng cách chạy lệnh sau:
+   CREATE DATABASE ecommerce_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+3. Import file `ecommerce_db.sql` (nằm ở thư mục gốc của dự án) vào database `ecommerce_db` vừa tạo:
+   - Dùng Command Line:
+     mysql -u [username] -p ecommerce_db < ecommerce_db.sql
+   - Hoặc dùng giao diện MySQL Workbench/DBeaver: Mở file `ecommerce_db.sql` rồi chạy toàn bộ script.
+
+------------------------------------------------------------------------
+PHẦN B: KHỞI ĐỘNG CHROMADB THỦ CÔNG (CHO CHATBOT AI)
+------------------------------------------------------------------------
+ChromaDB là một Vector Database. Để chạy thủ công:
+1. Bạn vẫn cần Docker (vì ChromaDB chính thức không hỗ trợ chạy trực tiếp tốt trên Windows ngoài Docker).
+2. Di chuyển vào thư mục `backend/rag/` và chạy:
+   docker-compose up -d
+
+========================================================================
+CÁC BƯỚC TIẾP THEO: KHỞI CHẠY BACKEND, NẠP RAG VÀ CHẠY FRONTEND
+========================================================================
+
+------------------------------------------------------------------------
+BƯỚC 2: CẤU HÌNH VÀ CHẠY BACKEND
+------------------------------------------------------------------------
+1. Mở terminal tại thư mục `backend/` của dự án.
+2. Cài đặt các thư viện:
+   npm install
+3. Tạo file `.env` nằm trực tiếp trong thư mục `backend/` với nội dung cấu hình sau:
+
+   ```env
+   # Cổng chạy ứng dụng Backend
+   PORT=5000
+
+   # Cấu hình kết nối MySQL Database
+   # (Nếu chạy Docker ở CÁCH 1, DB_USER=root và DB_PASS=root)
+   DB_HOST=localhost
+   DB_USER=root            
+   DB_PASS=root
+   DB_NAME=ecommerce_db
+
+   # Cấu hình JSON Web Token (JWT)
+   JWT_SECRET=change_this_secret
+   JWT_EXPIRES_IN=7d
+   SALT_ROUNDS=10
+
+   # Cấu hình gửi Email (Sử dụng cho chức năng quên/đổi mật khẩu)
+   EMAIL_USER=your_email@gmail.com
+   EMAIL_PASS=your_app_password     # Sử dụng mật khẩu ứng dụng (App Password) của Gmail
+
+   # Đường dẫn Frontend
+   FRONTEND_URL=http://localhost:5173
+
+   # Cấu hình AI Chatbot & RAG
+   GEMINI_API_KEY=your_gemini_api_key   # Điền API Key Gemini của bạn
+   GEMINI_MODEL=gemini-2.5-flash
+   CHROMA_HOST=localhost
+   CHROMA_PORT=8000
+
+   # Cấu hình cổng thanh toán VNPAY (Thử nghiệm)
+   VNP_TMN_CODE=your_vnpay_tmn_code
+   VNP_HASH_SECRET=your_vnpay_hash_secret
+   VNP_URL=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+   VNP_RETURN_URL=http://localhost:5173/api/payments/vnpay/return
+
+   # Thông số chia nhỏ dữ liệu văn bản cho RAG
+   RAG_CHUNK_SIZE=900
+   RAG_CHUNK_OVERLAP=150
+   ```
+
+4. Khởi động Server Backend:
+   - Chạy phát triển (Nodemon tự reload):
+     npm run dev
+   - Chạy thông thường:
+     npm start
+
+------------------------------------------------------------------------
+BƯỚC 3: NẠP DỮ LIỆU RAG VÀO VECTOR DB (CHO CHATBOT AI)
+------------------------------------------------------------------------
+Sau khi MySQL và ChromaDB đã chạy (bằng Docker hay thủ công) và Backend đã cấu hình file `.env` (có GEMINI_API_KEY):
+1. Mở terminal tại thư mục `backend/`.
+2. Trích xuất dữ liệu sản phẩm và bài viết thành file JSON:
+   node rag/scripts/prepareRAGData.js
+3. Tạo vector và nạp dữ liệu vào ChromaDB:
+   node rag/scripts/indexRAGDocs.js
+
+* Sau khi chạy xong, chatbot trên UI sẽ trả lời chính xác thông tin thực tế của cửa hàng.
+
+------------------------------------------------------------------------
+BƯỚC 4: CẤU HÌNH VÀ CHẠY FRONTEND
+------------------------------------------------------------------------
+1. Mở terminal tại thư mục `frontend/` của dự án.
+2. Cài đặt các thư viện:
+   npm install
+3. Khởi động Frontend ở chế độ phát triển (Vite):
+   npm run dev
+4. Truy cập hệ thống tại: http://localhost:5173
+
+------------------------------------------------------------------------
+BƯỚC 5: TÀI KHOẢN TRẢI NGHIỆM HỆ THỐNG MẶC ĐỊNH
+------------------------------------------------------------------------
+Dữ liệu mẫu đã có sẵn 3 tài khoản tương ứng với 3 vai trò:
+
+1. Quản trị viên (Admin):
+   - Email: admin@example.com / Mật khẩu: 123456
+2. Nhân viên (Staff):
+   - Email: staff@example.com / Mật khẩu: 123456
+3. Khách hàng (Customer):
+   - Email: customer@example.com / Mật khẩu: 123456
+
+------------------------------------------------------------------------
+BƯỚC 6: CHẠY KIỂM THỬ BACKEND (TEST SUITES)
+------------------------------------------------------------------------
+Để chạy unit test suite của Backend:
+1. Mở terminal tại thư mục `backend/`.
+2. Chạy test:
+   npm test
+3. Xem độ bao phủ mã nguồn (test coverage):
+   npm run test:coverage
+========================================================================

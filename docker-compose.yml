@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  # Dịch vụ Cơ sở dữ liệu MySQL (Build từ Dockerfile riêng để tự động import DB)
+  mysql:
+    build:
+      context: .
+      dockerfile: ./docker/mysql/Dockerfile
+    container_name: sqa_mysql_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ecommerce_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  # Dịch vụ Cơ sở dữ liệu Vector ChromaDB phục vụ cho AI RAG Chatbot
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: sqa_chroma_db
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/data
+    environment:
+      - CHROMA_SERVER_CORS_ALLOW_ORIGINS=*
+
+volumes:
+  mysql_data:
+    driver: local
+  chroma_data:
+    driver: local
