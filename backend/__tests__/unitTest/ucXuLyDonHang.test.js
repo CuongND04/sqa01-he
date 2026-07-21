@@ -6,12 +6,12 @@
  */
 
 // --- Shipment Mocks ---
-jest.mock("../models/shipmentModel");
-const ShipmentModel = require("../models/shipmentModel");
-const ShipmentService = require("../services/shipmentService");
+jest.mock("../../models/shipmentModel");
+const ShipmentModel = require("../../models/shipmentModel");
+const ShipmentService = require("../../services/shipmentService");
 
 // --- Order Mocks ---
-jest.mock("../models", () => ({
+jest.mock("../../models", () => ({
   cartModel: {
     findById: jest.fn(),
     getCartItemsWithDetails: jest.fn(),
@@ -37,15 +37,15 @@ jest.mock("../models", () => ({
   userModel: {},
 }));
 
-jest.mock("../config/mysql", () => ({
+jest.mock("../../config/mysql", () => ({
   pool: {
     getConnection: jest.fn(),
   },
 }));
 
-const { cartModel, orderModel, productModel } = require("../models");
-const { pool } = require("../config/mysql");
-const OrderService = require("../services/orderService");
+const { cartModel, orderModel, productModel } = require("../../models");
+const { pool } = require("../../config/mysql");
+const OrderService = require("../../services/orderService");
 
 const createMockConnection = () => ({
   beginTransaction: jest.fn().mockResolvedValue(),
@@ -62,7 +62,11 @@ describe("UC Xử lý đơn hàng - Shipment", () => {
 
   describe("getShipment()", () => {
     test("UT_SHIP_001 - Trả về shipment object khi orderId tồn tại", async () => {
-      const mockShipment = { order_id: 1, status: "shipping", tracking_code: "VN123" };
+      const mockShipment = {
+        order_id: 1,
+        status: "shipping",
+        tracking_code: "VN123",
+      };
       ShipmentModel.findByOrderId.mockResolvedValue(mockShipment);
       const result = await ShipmentService.getShipment(1);
       expect(result).toEqual(mockShipment);
@@ -80,43 +84,60 @@ describe("UC Xử lý đơn hàng - Shipment", () => {
       expect(ShipmentModel.findByOrderId).toHaveBeenCalledTimes(1);
       expect(ShipmentModel.findByOrderId).toHaveBeenCalledWith(9999);
     });
-    
+
     test("UT_SHIP_006 - Throw lỗi khi model throw lỗi DB trong getShipment", async () => {
       ShipmentModel.findByOrderId.mockRejectedValue(new Error("Timeout"));
       await expect(ShipmentService.getShipment(1)).rejects.toThrow("Timeout");
       expect(ShipmentModel.findByOrderId).toHaveBeenCalledTimes(1);
       expect(ShipmentModel.findByOrderId).toHaveBeenCalledWith(1);
     });
-    
+
     test("UT_SHIP_015 - Trả về null khi orderId là string không phải số (service không validate kiểu)", async () => {
       ShipmentModel.findByOrderId.mockResolvedValue(null);
       const result = await ShipmentService.getShipment("abc");
       expect(result).toBeNull();
       expect(ShipmentModel.findByOrderId).toHaveBeenCalledWith("abc");
     });
-    
+
     test("UT_SHIP_017 - Phải throw lỗi khi orderId là chuỗi không phải số ('abc')", async () => {
-      await expect(ShipmentService.getShipment("abc")).rejects.toThrow("Invalid orderId");
+      await expect(ShipmentService.getShipment("abc")).rejects.toThrow(
+        "Invalid orderId",
+      );
       expect(ShipmentModel.findByOrderId).not.toHaveBeenCalled();
     });
   });
 
   describe("updateShipment()", () => {
     test("UT_SHIP_003 - Gọi create() để tạo shipment mới khi chưa có shipment cho order này", async () => {
-      const newShipment = { order_id: 1, status: "shipping", tracking_code: "VN123" };
+      const newShipment = {
+        order_id: 1,
+        status: "shipping",
+        tracking_code: "VN123",
+      };
       ShipmentModel.findByOrderId.mockResolvedValue(null);
       ShipmentModel.create.mockResolvedValue(newShipment);
       const shipmentData = { status: "shipping", tracking_code: "VN123" };
       const result = await ShipmentService.updateShipment(1, shipmentData);
       expect(result).toEqual(newShipment);
       expect(ShipmentModel.create).toHaveBeenCalledTimes(1);
-      expect(ShipmentModel.create).toHaveBeenCalledWith({ order_id: 1, ...shipmentData });
+      expect(ShipmentModel.create).toHaveBeenCalledWith({
+        order_id: 1,
+        ...shipmentData,
+      });
       expect(ShipmentModel.update).not.toHaveBeenCalled();
     });
 
     test("UT_SHIP_004 - Gọi update() để cập nhật shipment hiện có khi đã tồn tại cho order", async () => {
-      const existingShipment = { order_id: 1, status: "shipping", tracking_code: "VN123" };
-      const updatedShipment = { order_id: 1, status: "delivered", tracking_code: "VN123" };
+      const existingShipment = {
+        order_id: 1,
+        status: "shipping",
+        tracking_code: "VN123",
+      };
+      const updatedShipment = {
+        order_id: 1,
+        status: "delivered",
+        tracking_code: "VN123",
+      };
       ShipmentModel.findByOrderId.mockResolvedValue(existingShipment);
       ShipmentModel.update.mockResolvedValue(updatedShipment);
       const shipmentData = { status: "delivered" };
@@ -129,8 +150,12 @@ describe("UC Xử lý đơn hàng - Shipment", () => {
     });
 
     test("UT_SHIP_005 - Throw lỗi khi model throw lỗi DB trong updateShipment", async () => {
-      ShipmentModel.findByOrderId.mockRejectedValue(new Error("DB connection failed"));
-      await expect(ShipmentService.updateShipment(1, { status: "shipping" })).rejects.toThrow("DB connection failed");
+      ShipmentModel.findByOrderId.mockRejectedValue(
+        new Error("DB connection failed"),
+      );
+      await expect(
+        ShipmentService.updateShipment(1, { status: "shipping" }),
+      ).rejects.toThrow("DB connection failed");
       expect(ShipmentModel.findByOrderId).toHaveBeenCalledTimes(1);
       expect(ShipmentModel.findByOrderId).toHaveBeenCalledWith(1);
     });
@@ -138,13 +163,15 @@ describe("UC Xử lý đơn hàng - Shipment", () => {
     test("UT_SHIP_014 - Tạo shipment mới khi shipmentData là object rỗng (service không validate data)", async () => {
       ShipmentModel.findByOrderId.mockResolvedValue(null);
       ShipmentModel.create.mockResolvedValue({ order_id: 1 });
-      const result = await ShipmentService.updateShipment(1, {}); 
+      const result = await ShipmentService.updateShipment(1, {});
       expect(ShipmentModel.create).toHaveBeenCalledWith({ order_id: 1 });
       expect(result).toEqual({ order_id: 1 });
     });
 
     test("UT_SHIP_016 - Phải throw lỗi khi shipmentData là object rỗng {}", async () => {
-      await expect(ShipmentService.updateShipment(1, {})).rejects.toThrow("Shipment data cannot be empty");
+      await expect(ShipmentService.updateShipment(1, {})).rejects.toThrow(
+        "Shipment data cannot be empty",
+      );
       expect(ShipmentModel.findByOrderId).not.toHaveBeenCalled();
     });
   });
@@ -182,7 +209,9 @@ describe("UC Xử lý đơn hàng - Shipment", () => {
 
     test("UT_SHIP_010 - Throw lỗi khi model throw lỗi DB trong getAllShipments", async () => {
       ShipmentModel.findAll.mockRejectedValue(new Error("Table not found"));
-      await expect(ShipmentService.getAllShipments({})).rejects.toThrow("Table not found");
+      await expect(ShipmentService.getAllShipments({})).rejects.toThrow(
+        "Table not found",
+      );
       expect(ShipmentModel.findAll).toHaveBeenCalledTimes(1);
     });
   });
@@ -205,8 +234,12 @@ describe("UC Xử lý đơn hàng - Shipment", () => {
     });
 
     test("UT_SHIP_013 - Throw lỗi khi model throw lỗi DB trong deleteShipment", async () => {
-      ShipmentModel.delete.mockRejectedValue(new Error("Foreign key constraint"));
-      await expect(ShipmentService.deleteShipment(1)).rejects.toThrow("Foreign key constraint");
+      ShipmentModel.delete.mockRejectedValue(
+        new Error("Foreign key constraint"),
+      );
+      await expect(ShipmentService.deleteShipment(1)).rejects.toThrow(
+        "Foreign key constraint",
+      );
       expect(ShipmentModel.delete).toHaveBeenCalledTimes(1);
       expect(ShipmentModel.delete).toHaveBeenCalledWith(1);
     });
@@ -229,7 +262,9 @@ describe("UC Xử lý đơn hàng - Order", () => {
 
     test("UT_ORD_002 - Throw lỗi khi model throw lỗi DB trong updateOrder", async () => {
       orderModel.update.mockRejectedValue(new Error("DB error"));
-      await expect(OrderService.updateOrder(1, { status: "shipping" })).rejects.toThrow("DB error");
+      await expect(
+        OrderService.updateOrder(1, { status: "shipping" }),
+      ).rejects.toThrow("DB error");
       expect(orderModel.update).toHaveBeenCalledTimes(1);
     });
   });
@@ -245,7 +280,9 @@ describe("UC Xử lý đơn hàng - Order", () => {
 
     test("UT_ORD_004 - Throw lỗi khi model throw lỗi DB trong updatePaymentStatus", async () => {
       orderModel.updatePaymentStatus.mockRejectedValue(new Error("DB error"));
-      await expect(OrderService.updatePaymentStatus(1, "paid")).rejects.toThrow("DB error");
+      await expect(OrderService.updatePaymentStatus(1, "paid")).rejects.toThrow(
+        "DB error",
+      );
       expect(orderModel.updatePaymentStatus).toHaveBeenCalledTimes(1);
     });
   });
@@ -347,7 +384,9 @@ describe("UC Xử lý đơn hàng - Order", () => {
 
     test("UT_ORD_010 - Throw lỗi khi orderId không tồn tại", async () => {
       orderModel.findByIdWithDetails.mockResolvedValue(null);
-      await expect(OrderService.getOrderDetail(9999)).rejects.toThrow("Order not found");
+      await expect(OrderService.getOrderDetail(9999)).rejects.toThrow(
+        "Order not found",
+      );
       expect(orderModel.findByIdWithDetails).toHaveBeenCalledTimes(1);
       expect(orderModel.findByIdWithDetails).toHaveBeenCalledWith(9999);
     });
