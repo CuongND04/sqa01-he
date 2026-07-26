@@ -1,0 +1,4 @@
+# Thư viện Selenium cho Python
+selenium>=4.0.0
+webdriver-manager>=4.0.0
+mysql-connector-python>=8.0.0
