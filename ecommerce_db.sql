@@ -1,5 +1,5 @@
 SET NAMES utf8mb4;
--- DROP DATABASE IF EXISTS ecommerce_db;
+DROP DATABASE IF EXISTS ecommerce_db;
 CREATE DATABASE IF NOT EXISTS ecommerce_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE ecommerce_db;
 -- USERS & ROLES
@@ -425,22 +425,27 @@ INSERT INTO cart_items (cart_id, product_variant_id, quantity) VALUES
 (1, 1, 2);
 
 -- ORDERS
-INSERT INTO orders (user_id, total_price, status, payment_status, shipping_address, payment_method, note) VALUES
-(1, 1380000, 'delivered', 'paid', '123 Nguyễn Trãi, Thanh Xuân, Hà Nội', 'COD', 'Giao hàng giờ hành chính'),
-(1, 850000, 'shipping', 'paid', '123 Nguyễn Trãi, Thanh Xuân, Hà Nội', 'COD', 'Gọi trước khi giao'),
-(3, 600000, 'pending', 'unpaid', '456 Lê Lợi, Quận 1, TP.HCM', 'COD', NULL),
-(2, 1430000, 'delivered', 'paid', '789 Trần Hưng Đạo, Hoàn Kiếm, Hà Nội', 'COD', 'Để ở bảo vệ nếu không có người');
+INSERT INTO orders (id, user_id, total_price, status, payment_status, shipping_address, payment_method, note, created_at) VALUES
+(1, 3, 1380000, 'shipping', 'paid', '123 Nguyễn Trãi, Thanh Xuân, Hà Nội', 'COD', 'Giao hàng giờ hành chính', '2026-05-05 10:00:00'),
+(2, 3, 850000, 'shipping', 'unpaid', '456 Lê Lợi, Quận 1, TP.HCM', 'COD', 'Gọi trước khi giao', '2026-05-06 10:00:00'),
+(3, 3, 600000, 'pending', 'unpaid', 'số nhà #5, đường Điện Biên Phủ, P.15', 'COD', NULL, '2026-05-07 10:00:00'),
+(4, 4, 1430000, 'delivered', 'unpaid', '789 Trần Hưng Đạo, Hoàn Kiếm, Hà Nội', 'COD', 'Để ở bảo vệ', '2026-05-08 10:00:00'),
+(5, 3, 500000, 'canceled', 'refunded', '101 Mai Chí Thọ, Thủ Đức', 'VNPAY', NULL, '2026-05-09 10:00:00'),
+(6, 1, 266500, 'canceled', 'refunded', '123 Lê Lợi, Q1, TP.HCM', 'VNPAY', NULL, '2026-05-10 10:00:00'),
+(7, 4, 300000, 'canceled', 'unpaid', '222 Nguyễn Văn Linh, Đà Nẵng', 'COD', NULL, '2026-05-11 10:00:00'),
+(8, 3, 450000, 'pending', 'paid', 'Tòa nhà Landmark 81, số 720A Điện Biên Phủ, Phường 22, Quận Bình Thạnh, Thành phố Hồ Chí Minh, Việt Nam. Địa chỉ này cực kỳ dài để test chức năng truncate của bảng hiển thị danh sách đơn hàng đảm bảo không bị vỡ layout khi nội dung vượt quá 200 ký tự hiển thị trên giao diện.', 'VNPAY', NULL, '2026-05-12 10:00:00'),
+(9, 2, 750000, 'canceled', 'refunded', '888 Trần Phú, Nha Trang', 'VNPAY', NULL, '2026-05-13 10:00:00'),
+(10, 3, 1200000, 'delivered', 'paid', '999 Hùng Vương, Cần Thơ', 'COD', NULL, '2026-05-14 10:00:00'),
+(11, 3, 550000, 'shipping', 'paid', '111 Lý Thường Kiệt, Huế', 'COD', 'Test date logic', '2026-05-01 10:00:00'),
+(12, 3, 650000, 'confirmed', 'paid', '444 Tôn Đức Thắng, Đống Đa, Hà Nội', 'COD', NULL, '2026-05-15 10:00:00');
 
 -- ORDER ITEMS
 INSERT INTO order_items (order_id, product_variant_id, quantity, price) VALUES
-(2, 5, 1, 310000),
-(2, 10, 2, 145000),
-(2, 25, 1, 200000),
-(2, 34, 2, 150000),
-(2, 46, 4, 70000),
-(3, 7, 1, 300000),
-(3, 24, 1, 230000),
-(3, 31, 3, 100000);
+(2, 5, 1, 310000), (2, 10, 2, 145000), (2, 25, 1, 200000), (2, 34, 2, 150000), (2, 46, 4, 70000),
+(3, 7, 1, 300000), (3, 24, 1, 230000), (3, 31, 3, 100000),
+(1, 1, 1, 1380000), (4, 2, 1, 1430000), (5, 3, 1, 500000), (6, 4, 1, 266500),
+(7, 5, 1, 300000), (8, 6, 1, 450000), (9, 7, 1, 750000), (10, 8, 1, 1200000),
+(11, 9, 1, 550000), (12, 10, 1, 650000);
 
 -- REVIEWS
 INSERT INTO reviews (user_id, product_id, rating, comment) VALUES
@@ -468,11 +473,9 @@ INSERT INTO blog_comments (blog_id, user_id, content) VALUES
 
 -- Thêm shipments cho các đơn hàng
 INSERT INTO shipments (order_id, tracking_number, carrier, shipped_date, delivered_date) VALUES
-(2, 'VN-2025-001', 'Giao Hàng Nhanh', '2025-10-20 10:00:00', '2025-10-22 14:30:00'),
-(3, 'VN-2025-002', 'Giao Hàng Tiết Kiệm',  '2025-10-28 09:00:00', NULL),
-(4, 'VN-2025-003', 'ViettelPost',  '2025-10-15 08:30:00', '2025-10-17 16:00:00');
+(1, 'VN-2025-001', 'GHTK', '2026-05-10 09:00:00', NULL),
+(10, 'VN-2025-003', 'GHN', '2026-05-04 10:00:00', '2026-05-22 14:30:00');
 
 INSERT INTO bills (order_id, tax_number, tax_amount, total_amount, issued_date) VALUES
-(2, 'HD-2025-001', 138000, 1518000, '2025-10-22 14:30:00'),
-(4, 'HD-2025-002', 143000, 1573000, '2025-10-17 16:00:00');
+(10, 'HD-2025-001', 120000, 1320000, '2026-05-22 14:30:00');
 
