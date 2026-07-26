@@ -475,4 +475,3 @@ INSERT INTO shipments (order_id, tracking_number, carrier, shipped_date, deliver
 INSERT INTO bills (order_id, tax_number, tax_amount, total_amount, issued_date) VALUES
 (2, 'HD-2025-001', 138000, 1518000, '2025-10-22 14:30:00'),
 (4, 'HD-2025-002', 143000, 1573000, '2025-10-17 16:00:00');
-

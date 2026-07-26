@@ -1,16 +1,18 @@
 const mysql = require('mysql2/promise');
 
 const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  database: process.env.DB_NAME,
+  host: process.env.DB_HOST || 'localhost',
+  port: process.env.DB_PORT || 3306,
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASS || 'root',
+  database: process.env.DB_NAME || 'ecommerce_db',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
   enableKeepAlive: true,     // Giữ kết nối sống
   keepAliveInitialDelay: 0,
-  timezone: '+07:00'         // Múi giờ Việt Nam
+  timezone: '+07:00',        // Múi giờ Việt Nam
+  charset: 'utf8mb4'
 });
 
 // Helper function để execute query
